@@ -6,51 +6,7 @@ const DEFAULT_SETTINGS = {
   theme: 'dark-theme'
 };
 
-// Curated Demo Courses (100% working YouTube Video IDs)
-const DEMO_COURSES = [
-  {
-    id: 'demo-javascript',
-    title: 'JavaScript Fundamentals Masterclass',
-    description: 'Learn the core concepts of JavaScript including variables, data types, functions, arrays, objects, and DOM manipulation. This course is designed to build a strong foundation for web development.',
-    creator: 'Programming with Mosh & Traversy',
-    videosCount: 5,
-    videos: [
-      { id: 'W6NZfCO5SIk', title: 'JavaScript Tutorial for Beginners: Getting Started', duration: '48:16', thumbnail: 'https://img.youtube.com/vi/W6NZfCO5SIk/hqdefault.jpg' },
-      { id: 'hdI2bqOjy3c', title: 'JavaScript Crash Course for Beginners', duration: '1:40:07', thumbnail: 'https://img.youtube.com/vi/hdI2bqOjy3c/hqdefault.jpg' },
-      { id: '3PHXvLPz8U8', title: 'JavaScript Functions and Scope Explained', duration: '15:20', thumbnail: 'https://img.youtube.com/vi/3PHXvLPz8U8/hqdefault.jpg' },
-      { id: '9M4XKi25I2M', title: 'JavaScript Arrays and ES6 Array Methods', duration: '20:45', thumbnail: 'https://img.youtube.com/vi/9M4XKi25I2M/hqdefault.jpg' },
-      { id: 'iWOYAxlng4w', title: 'DOM Manipulation Crash Course for Web Developers', duration: '33:12', thumbnail: 'https://img.youtube.com/vi/iWOYAxlng4w/hqdefault.jpg' }
-    ]
-  },
-  {
-    id: 'demo-uiux',
-    title: 'UI/UX Design Essentials & Principles',
-    description: 'Dive deep into user interface and user experience design. Learn the differences between UI and UX, visual hierarchy, typography rules, color theory, and how to start designing in Figma.',
-    creator: 'Design Course & Flux Academy',
-    videosCount: 5,
-    videos: [
-      { id: '5CxXhyhT67Y', title: 'What is UI vs UX Design? A Beginner Guide', duration: '12:05', thumbnail: 'https://img.youtube.com/vi/5CxXhyhT67Y/hqdefault.jpg' },
-      { id: 'zHAa-m16t2Y', title: 'Visual Hierarchy & Alignment in Interface Design', duration: '11:42', thumbnail: 'https://img.youtube.com/vi/zHAa-m16t2Y/hqdefault.jpg' },
-      { id: '7vP7Q5F_Q78', title: 'Typography Rules for Elegant & Readable Interfaces', duration: '15:10', thumbnail: 'https://img.youtube.com/vi/7vP7Q5F_Q78/hqdefault.jpg' },
-      { id: '_2LLXnUdUIc', title: 'Color Theory: Creating Harmonies and Palettes', duration: '16:10', thumbnail: 'https://img.youtube.com/vi/_2LLXnUdUIc/hqdefault.jpg' },
-      { id: 'dXQ78tPK1tY', title: 'Figma Tutorial: Designing Your First Landing Page', duration: '42:50', thumbnail: 'https://img.youtube.com/vi/dXQ78tPK1tY/hqdefault.jpg' }
-    ]
-  },
-  {
-    id: 'demo-neural',
-    title: 'Deep Learning & Neural Networks Crash Course',
-    description: 'An visually rich introduction to deep learning. Master how neural networks work, the mathematics of gradient descent, backpropagation, and explore TensorFlow and PyTorch paradigms.',
-    creator: '3Blue1Brown & AI Labs',
-    videosCount: 5,
-    videos: [
-      { id: 'aircAruvnKk', title: 'But what is a neural network? | Chapter 1', duration: '20:13', thumbnail: 'https://img.youtube.com/vi/aircAruvnKk/hqdefault.jpg' },
-      { id: 'IHZwWFHWa-w', title: 'Gradient descent, how neural networks learn | Chapter 2', duration: '21:01', thumbnail: 'https://img.youtube.com/vi/IHZwWFHWa-w/hqdefault.jpg' },
-      { id: 'Ilg3gGewQ5U', title: 'What is backpropagation and what is it actually doing? | Chapter 3', duration: '13:54', thumbnail: 'https://img.youtube.com/vi/Ilg3gGewQ5U/hqdefault.jpg' },
-      { id: 'tIeHLnjs5U8', title: 'Backpropagation Calculus & Chain Rule | Chapter 4', duration: '10:26', thumbnail: 'https://img.youtube.com/vi/tIeHLnjs5U8/hqdefault.jpg' },
-      { id: 'd32_O6E0S0Q', title: 'TensorFlow vs PyTorch: Deep Learning Frameworks', duration: '18:40', thumbnail: 'https://img.youtube.com/vi/d32_O6E0S0Q/hqdefault.jpg' }
-    ]
-  }
-];
+// 
 
 // Firebase Configuration - REPLACE WITH YOUR OWN CREDENTIALS FROM FIREBASE CONSOLE
 const firebaseConfig = {
@@ -216,7 +172,6 @@ document.addEventListener('DOMContentLoaded', () => {
   initTheme();
   initUIElements();
   loadDashboardData();
-  renderRecommendedCourses();
   setupEventListeners();
   initFirebase();
   
@@ -350,50 +305,6 @@ function loadDashboardData() {
   lucide.createIcons();
 }
 
-function renderRecommendedCourses() {
-  const container = document.getElementById('recommended-courses-container');
-  container.innerHTML = '';
-  
-  DEMO_COURSES.forEach(course => {
-    const card = document.createElement('div');
-    card.className = 'course-card recommended-card';
-    card.innerHTML = `
-      <div class="course-card-thumb">
-        <img src="${course.videos[0].thumbnail}" alt="${course.title}">
-        <span class="badge-video-count">
-          <i data-lucide="play"></i>
-          <span>${course.videos.length} lessons</span>
-        </span>
-      </div>
-      <div class="course-card-content">
-        <span class="course-card-instructor">Instructor: ${course.creator}</span>
-        <h4 class="course-card-title">${course.title}</h4>
-        <div class="course-card-progress" style="margin-top: 15px;">
-          <button class="btn-primary" style="width: 100%; justify-content: center; padding: 8px 16px; font-size: 13px;">
-            <i data-lucide="graduation-cap"></i> Load Course Demo
-          </button>
-        </div>
-      </div>
-    `;
-    
-    card.addEventListener('click', () => {
-      // Overwrite or Add demo course to active database to force update to 100% working video IDs
-      const idx = state.courses.findIndex(c => c.id === course.id);
-      if (idx !== -1) {
-        state.courses[idx] = course;
-      } else {
-        state.courses.push(course);
-      }
-      Database.set('courses', state.courses);
-      loadDashboardData();
-      launchCourse(course.id);
-    });
-    
-    container.appendChild(card);
-  });
-  
-  lucide.createIcons();
-}
 
 // 5. IMPORT LOGIC
 async function importPlaylistFromUrl(urlOrId) {
