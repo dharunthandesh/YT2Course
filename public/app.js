@@ -20,7 +20,9 @@ const firebaseConfig = {
 };
 
 let dbSyncActive = false;
-const BACKEND_URL = window.location.port === '3000' ? '' : 'http://localhost:3000';
+const BACKEND_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+  ? (window.location.port === '3000' ? '' : 'http://localhost:3000')
+  : '';
 
 class Database {
   static get(key, defaultVal) {
@@ -119,39 +121,73 @@ function setupAuthListeners() {
       
       try {
         const userDoc = await db.collection('users').doc(user.uid).get();
-        if (userDoc.exists) {
-          const cloudData = userDoc.data();
-          console.log('[Firebase] Synced state from Cloud.');
-          
-          if (cloudData.courses) {
-            state.courses = cloudData.courses;
-            localStorage.setItem('yt2c_courses', JSON.stringify(state.courses));
-          }
-          if (cloudData.progress) {
-            state.progress = cloudData.progress;
-            localStorage.setItem('yt2c_progress', JSON.stringify(state.progress));
-          }
-          if (cloudData.settings) {
-            state.settings = cloudData.settings;
-            localStorage.setItem('yt2c_settings', JSON.stringify(state.settings));
-          }
-          if (cloudData.apiKey) {
-            state.apiKey = cloudData.apiKey;
-            localStorage.setItem('yt2c_api_key', JSON.stringify(state.apiKey));
-          }
-          if (cloudData.geminiApiKey) {
-            state.geminiApiKey = cloudData.geminiApiKey;
-            localStorage.setItem('yt2c_gemini_api_key', JSON.stringify(state.geminiApiKey));
-          }
-          
-          initTheme();
-          loadDashboardData();
-        } else {
-          console.log('[Firebase] Uploading local state to Cloud.');
-          await syncDataToCloud();
+        const cloudData = userDoc.exists ? userDoc.data() : null;
+        console.log('[Firebase] Fetched cloud data. Merging local and cloud states...');
+
+        // 1. Merge Courses: Union by course ID
+        const mergedCourses = [...state.courses];
+        if (cloudData && cloudData.courses) {
+          cloudData.courses.forEach(cloudCourse => {
+            if (!mergedCourses.some(c => c.id === cloudCourse.id)) {
+              mergedCourses.push(cloudCourse);
+            }
+          });
         }
+        state.courses = mergedCourses;
+        localStorage.setItem('yt2c_courses', JSON.stringify(state.courses));
+
+        // 2. Merge Progress: Merge completed videos, bookmarks, and notes per course
+        const mergedProgress = { ...state.progress };
+        if (cloudData && cloudData.progress) {
+          for (const courseId in cloudData.progress) {
+            if (!mergedProgress[courseId]) {
+              mergedProgress[courseId] = cloudData.progress[courseId];
+            } else {
+              const localCompleted = mergedProgress[courseId].completedVideos || [];
+              const cloudCompleted = cloudData.progress[courseId].completedVideos || [];
+              const unionCompleted = Array.from(new Set([...localCompleted, ...cloudCompleted]));
+
+              const localNotes = mergedProgress[courseId].notes || {};
+              const cloudNotes = cloudData.progress[courseId].notes || {};
+              const mergedNotes = { ...localNotes, ...cloudNotes };
+
+              const localBookmarks = mergedProgress[courseId].bookmarks || {};
+              const cloudBookmarks = cloudData.progress[courseId].bookmarks || {};
+              const mergedBookmarks = { ...localBookmarks, ...cloudBookmarks };
+
+              mergedProgress[courseId] = {
+                completedVideos: unionCompleted,
+                lastVideoId: mergedProgress[courseId].lastVideoId || cloudData.progress[courseId].lastVideoId,
+                notes: mergedNotes,
+                bookmarks: mergedBookmarks
+              };
+            }
+          }
+        }
+        state.progress = mergedProgress;
+        localStorage.setItem('yt2c_progress', JSON.stringify(state.progress));
+
+        // 3. Settings, api keys (favoring cloud if exists)
+        if (cloudData && cloudData.settings) {
+          state.settings = cloudData.settings;
+          localStorage.setItem('yt2c_settings', JSON.stringify(state.settings));
+        }
+        if (cloudData && cloudData.apiKey) {
+          state.apiKey = cloudData.apiKey;
+          localStorage.setItem('yt2c_api_key', JSON.stringify(state.apiKey));
+        }
+        if (cloudData && cloudData.geminiApiKey) {
+          state.geminiApiKey = cloudData.geminiApiKey;
+          localStorage.setItem('yt2c_gemini_api_key', JSON.stringify(state.geminiApiKey));
+        }
+
+        // Sync the fully merged state back to Firestore so both devices are up-to-date
+        await syncDataToCloud();
+        
+        initTheme();
+        loadDashboardData();
       } catch (err) {
-        console.error('[Firebase Sync Get Error]', err);
+        console.error('[Firebase Sync Get/Merge Error]', err);
       }
     } else {
       console.log('[Firebase] Signed out.');
