@@ -1,0 +1,8 @@
+{
+  "version": 2,
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/api/scrape-playlist", "destination": "/api/scrape-playlist.js" },
+    { "source": "/api/transcript", "destination": "/api/transcript.js" }
+  ]
+}

@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YT2Course - Convert YouTube Playlists to Interactive Courses</title>
+  <!-- SEO Tags -->
+  <meta name="description" content="Turn any YouTube playlist into a structured course with progress tracking, notes, bookmarks, and a completion certificate.">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- CSS -->
+  <link rel="stylesheet" href="style.css">
+  
+  <!-- External JS (Lucide Icons, Canvas Confetti) -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+</head>
+<body class="dark-theme">
+  <!-- App Container -->
+  <div id="app">
+    
+    <!-- Top Navbar -->
+    <header class="app-header">
+      <div class="header-logo" id="btn-logo">
+        <div class="logo-icon">
+          <i data-lucide="play-circle" class="accent-color"></i>
+        </div>
+        <div class="logo-text-wrapper">
+          <h1>YT2<span class="gradient-text">Course</span></h1>
+          <span class="author-subtext">by Dharun Thandesh</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="btn-theme-toggle" class="btn-icon" title="Toggle Theme">
+          <i data-lucide="sun" class="sun-icon"></i>
+          <i data-lucide="moon" class="moon-icon"></i>
+        </button>
+        <button id="btn-settings" class="btn-icon" title="Settings">
+          <i data-lucide="settings"></i>
+        </button>
+        <button id="btn-auth-trigger" class="btn-secondary" title="Account" style="gap: 6px; padding: 0 14px;">
+          <i data-lucide="user"></i>
+          <span id="auth-status-label">Sign In</span>
+        </button>
+        <button id="btn-nav-dashboard" class="btn-primary">
+          <i data-lucide="layout-dashboard"></i>
+          <span>Dashboard</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- MAIN VIEWS -->
+    <main class="app-main">
+      
+      <!-- 1. DASHBOARD VIEW -->
+      <section id="view-dashboard" class="view-section active">
+        <!-- Hero Section -->
+        <div class="hero-banner">
+          <div class="hero-content">
+            <span class="badge">by Dharun Thandesh</span>
+            <h2>Convert YouTube Playlists into <span class="gradient-text">Premium Courses</span></h2>
+            <p>Paste any YouTube playlist link, track your learning progress, take time-stamped notes, and earn a course certificate—all in a clean, distraction-free environment.</p>
+          </div>
+          
+          <!-- Quick Import Card -->
+          <div class="import-card glass-panel">
+            <div class="import-header">
+              <h3>Create a Course</h3>
+              <p>Add a YouTube Playlist to get started</p>
+            </div>
+            
+            <!-- URL Form -->
+            <div class="import-tab-content active" id="import-url-pane" style="padding-top: 10px;">
+              <div class="input-group">
+                <i data-lucide="link" class="input-icon"></i>
+                <input type="text" id="playlist-url-input" placeholder="https://www.youtube.com/playlist?list=..." autocomplete="off">
+              </div>
+              <button id="btn-import-url" class="btn-action">
+                <span>Convert to Course</span>
+                <i data-lucide="arrow-right"></i>
+              </button>
+              <p class="import-tip">Direct URL parsing works for all public YouTube playlists.</p>
+            </div>
+
+            <!-- Loading overlay inside card -->
+            <div class="import-loading-overlay" id="import-loading">
+              <div class="spinner"></div>
+              <p id="loading-status-text">Fetching playlist data from YouTube...</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- MY COURSES SECTION -->
+        <div class="dashboard-section">
+          <div class="section-title-wrapper">
+            <h3><i data-lucide="book-open"></i> My Learning Shelf</h3>
+            <span class="course-count-badge" id="my-course-count">0 Courses</span>
+          </div>
+          <div class="courses-grid" id="my-courses-container">
+            <!-- Dynamic courses render here -->
+            <div class="empty-state">
+              <div class="empty-icon"><i data-lucide="graduation-cap"></i></div>
+              <h4>No courses imported yet</h4>
+              <p>Paste a YouTube playlist link above or click on one of our recommended courses below to experience the platform!</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- DEMO/RECOMMENDED COURSES SECTION -->
+        <div class="dashboard-section">
+          <div class="section-title-wrapper">
+            <h3><i data-lucide="sparkles"></i> Recommended Free Courses</h3>
+            <p class="section-subtitle">Click to instantly load these pre-built courses and test the Udemy interface</p>
+          </div>
+          <div class="courses-grid recommended-grid" id="recommended-courses-container">
+            <!-- Static Demo Courses will go here -->
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. COURSE PLAYER VIEW -->
+      <section id="view-player" class="view-section">
+        <div class="player-layout">
+          
+          <!-- Left Column: Video Player & Tabs -->
+          <div class="player-main-column">
+            
+            <!-- Video Canvas -->
+            <div class="video-player-container">
+              <div id="yt-player-placeholder">
+                <!-- YouTube Iframe API will inject the player here -->
+                <div class="player-fallback-ui">
+                  <i data-lucide="video"></i>
+                  <p>Loading Video Player...</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Video Title Bar -->
+            <div class="video-details-bar">
+              <div class="title-meta">
+                <span class="current-lesson-index" id="player-lesson-number">Lesson 1</span>
+                <h2 id="player-video-title">Loading Lesson Title...</h2>
+              </div>
+              <div class="video-actions">
+                <button id="btn-prev-lesson" class="btn-secondary" title="Previous Lesson">
+                  <i data-lucide="skip-back"></i>
+                  <span>Prev</span>
+                </button>
+                <button id="btn-toggle-complete" class="btn-outline">
+                  <i data-lucide="check" class="check-icon"></i>
+                  <span>Mark Complete</span>
+                </button>
+                <button id="btn-next-lesson" class="btn-primary" title="Next Lesson">
+                  <span>Next</span>
+                  <i data-lucide="skip-forward"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Tabs Section (About, Notes, Bookmarks, AI Study Guide) -->
+            <div class="tabs-container">
+              <div class="tabs-header">
+                <button class="tab-btn active" data-tab="about"><i data-lucide="info"></i> About Course</button>
+                <button class="tab-btn" data-tab="notes"><i data-lucide="pencil"></i> Notes</button>
+                <button class="tab-btn" data-tab="bookmarks"><i data-lucide="bookmark"></i> Bookmarks</button>
+                <button class="tab-btn" data-tab="ai-notes"><i data-lucide="sparkles"></i> AI Notes</button>
+              </div>
+              
+              <div class="tabs-body">
+                <!-- Tab: About -->
+                <div class="tab-pane active" id="pane-about">
+                  <div class="about-course-header">
+                    <h3 id="about-course-title">Course Title</h3>
+                    <p class="instructor-tag">Instructor: <span id="about-course-creator">Instructor Name</span></p>
+                  </div>
+                  <div class="about-course-body">
+                    <h4>Course Description</h4>
+                    <p id="about-course-desc" class="course-description-text">No description available for this course.</p>
+                  </div>
+                </div>
+
+                <!-- Tab: Notes -->
+                <div class="tab-pane" id="pane-notes">
+                  <div class="notes-wrapper">
+                    <div class="notes-header">
+                      <span>Notes for current video (Auto-saved)</span>
+                      <button id="btn-export-notes" class="btn-text-link">
+                        <i data-lucide="download"></i> Export Notes
+                      </button>
+                    </div>
+                    <textarea id="lesson-notes-textarea" placeholder="Type your notes here... You can capture key points, summarize lessons, or write code snippets. Notes are auto-saved to your local browser storage for this video."></textarea>
+                  </div>
+                </div>
+
+                <!-- Tab: Bookmarks -->
+                <div class="tab-pane" id="pane-bookmarks">
+                  <div class="bookmarks-wrapper">
+                    <div class="add-bookmark-form">
+                      <div class="input-group">
+                        <button id="btn-capture-timestamp" class="btn-secondary" title="Capture current video timestamp">
+                          <i data-lucide="clock"></i>
+                          <span id="current-timestamp-label">0:00</span>
+                        </button>
+                        <input type="text" id="bookmark-label-input" placeholder="Add a note or label for this timestamp...">
+                      </div>
+                      <button id="btn-add-bookmark" class="btn-primary">Add Bookmark</button>
+                    </div>
+                    <div class="bookmarks-list" id="bookmarks-container">
+                      <!-- Dynamic bookmarks will go here -->
+                      <p class="empty-list-msg">No bookmarks added for this lesson yet. Pause the video and add a bookmark at a specific timestamp to easily jump back here!</p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Tab: AI Notes -->
+                <div class="tab-pane" id="pane-ai-notes">
+                  <div class="ai-notes-wrapper">
+                    <div class="ai-notes-header-bar">
+                      <div class="notes-header-left">
+                        <i data-lucide="sparkles" class="accent-color"></i>
+                        <div>
+                          <h4>AI Notes & Video Summary</h4>
+                          <p>Fetch video transcript and automatically compile accurate structured notes</p>
+                        </div>
+                      </div>
+                      <button id="btn-generate-ai-notes" class="btn-primary">
+                        <i data-lucide="zap"></i>
+                        <span>Generate AI Summary</span>
+                      </button>
+                    </div>
+                    
+                    <div class="ai-notes-display" id="ai-notes-display">
+                      <div class="ai-notes-placeholder">
+                        <i data-lucide="file-text"></i>
+                        <p>Click "Generate AI Summary" to fetch the live YouTube transcript and generate a structured video summary.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Right Column: Course Sidebar (Playlist/Lessons list) -->
+          <div class="player-sidebar glass-panel">
+            <div class="sidebar-header">
+              <h3 id="sidebar-course-title">Loading Course...</h3>
+              <p class="sidebar-creator">By <span id="sidebar-course-creator">Instructor</span></p>
+              
+              <!-- Progress Bar -->
+              <div class="sidebar-progress-container">
+                <div class="progress-meta">
+                  <span class="progress-percent" id="sidebar-progress-percent">0% Completed</span>
+                  <span class="progress-ratio" id="sidebar-progress-ratio">0/0 Lessons</span>
+                </div>
+                <div class="progress-track-wrapper">
+                  <div class="progress-fill" id="sidebar-progress-bar" style="width: 0%"></div>
+                </div>
+              </div>
+              
+              <!-- Course Level Action -->
+              <button id="btn-claim-certificate" class="btn-certificate disabled" disabled>
+                <i data-lucide="award"></i>
+                <span>Claim Certificate</span>
+              </button>
+            </div>
+            
+            <!-- Lessons List -->
+            <div class="sidebar-lessons-list" id="sidebar-lessons-container">
+              <!-- Dynamically populated lessons sections -->
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+    </main>
+
+    <!-- SETTINGS MODAL -->
+    <div class="modal-overlay" id="modal-settings">
+      <div class="modal-card glass-panel">
+        <div class="modal-header">
+          <h3><i data-lucide="settings"></i> Application Settings</h3>
+          <button class="btn-icon btn-close-modal"><i data-lucide="x"></i></button>
+        </div>
+        <div class="modal-body">
+          <div class="setting-item">
+            <div class="setting-info">
+              <label for="settings-username">Student Name</label>
+              <p>This name will appear on your Certificates of Completion.</p>
+            </div>
+            <input type="text" id="settings-username" placeholder="Enter your full name">
+          </div>
+          
+          <div class="setting-item">
+            <div class="setting-info">
+              <label for="settings-gemini-key">Gemini API Key (Optional)</label>
+              <p>Used to generate accurate video summaries using Google Gemini. <a href="https://aistudio.google.com/app/apikey" target="_blank" class="btn-text-link">Get a free key here</a></p>
+            </div>
+            <input type="password" id="settings-gemini-key" placeholder="Paste your Gemini API key...">
+          </div>
+          
+          <div class="setting-item">
+            <div class="setting-info">
+              <label>Database Management</label>
+              <p>Export your courses, notes, and progress to move to another browser, or reset everything.</p>
+            </div>
+            <div class="settings-db-buttons">
+              <button id="btn-export-db" class="btn-secondary"><i data-lucide="upload-cloud"></i> Export Backup</button>
+              <button id="btn-import-db-trigger" class="btn-secondary"><i data-lucide="download-cloud"></i> Import Backup</button>
+              <input type="file" id="db-file-input" style="display: none;" accept=".json">
+              <button id="btn-reset-db" class="btn-danger"><i data-lucide="trash-2"></i> Reset Database</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AUTH MODAL -->
+    <div class="modal-overlay" id="modal-auth">
+      <div class="modal-card auth-modal-card glass-panel" style="max-width: 420px;">
+        <div class="modal-header">
+          <h3><i data-lucide="user"></i> Student Account</h3>
+          <button class="btn-icon btn-close-modal"><i data-lucide="x"></i></button>
+        </div>
+        <div class="modal-body">
+          <!-- Logged out state -->
+          <div id="auth-logged-out-state">
+            <p style="margin-bottom: 20px; font-size: 14px; color: var(--text-muted);">Sign in to save your courses, notes, progress, and certificates to the cloud so you can continue learning anywhere.</p>
+            
+            <div id="auth-error-message" style="display: none; color: var(--color-danger); font-size: 13px; margin-bottom: 12px; font-weight: 500; text-align: center; background: rgba(239, 68, 68, 0.1); padding: 8px; border-radius: var(--radius-sm);"></div>
+            
+            <form id="email-auth-form" onsubmit="return false;" style="display: flex; flex-direction: column; gap: 14px;">
+              <div class="input-group">
+                <i data-lucide="mail" class="input-icon"></i>
+                <input type="email" id="auth-email-input" placeholder="Enter your email..." required style="width: 100%;">
+              </div>
+              <div class="input-group">
+                <i data-lucide="lock" class="input-icon"></i>
+                <input type="password" id="auth-password-input" placeholder="Enter your password..." required style="width: 100%;">
+              </div>
+              
+              <div class="auth-action-buttons" style="display: flex; gap: 12px; margin-top: 6px;">
+                <button id="btn-auth-login" class="btn-primary" style="flex: 1; justify-content: center;">Log In</button>
+                <button id="btn-auth-signup" class="btn-secondary" style="flex: 1; justify-content: center;">Sign Up</button>
+              </div>
+            </form>
+            
+            <div style="margin: 20px 0; text-align: center; border-bottom: 1px solid var(--border-color); line-height: 0.1em;">
+              <span style="background: var(--bg-panel); padding: 0 10px; color: var(--text-muted); font-size: 12px;">OR</span>
+            </div>
+            
+            <button id="btn-auth-google" class="btn-action" style="background-color: var(--color-primary); color: white; justify-content: center; gap: 10px; width: 100%; border: none;">
+              <i data-lucide="chrome"></i>
+              <span>Continue with Google</span>
+            </button>
+          </div>
+          
+          <!-- Logged in state -->
+          <div id="auth-logged-in-state" style="display: none; text-align: center;">
+            <div id="auth-user-avatar" style="width: 60px; height: 60px; border-radius: 50%; background: var(--color-primary); color: white; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; margin: 0 auto 16px auto;">
+              U
+            </div>
+            <h4 id="auth-user-email" style="font-size: 16px; margin-bottom: 4px; color: var(--text-main);">user@example.com</h4>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 24px;">Your courses and progress are securely synced to the cloud.</p>
+            
+            <button id="btn-auth-logout" class="btn-secondary" style="width: 100%; border-color: var(--color-danger); color: var(--color-danger); justify-content: center; gap: 8px;">
+              <i data-lucide="log-out"></i>
+              <span>Log Out</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CERTIFICATE PRINT CONTAINER (Targeted by @media print) -->
+    <div id="certificate-print-container">
+      <div class="cert-border-outer">
+        <div class="cert-border-inner">
+          <div class="cert-content">
+            <div class="cert-badge">
+              <i data-lucide="award"></i>
+            </div>
+            <h1 class="cert-title">Certificate of Completion</h1>
+            <p class="cert-subtitle">THIS IS PROUDLY PRESENTED TO</p>
+            <h2 class="cert-recipient" id="cert-recipient-name">Student Name</h2>
+            <p class="cert-text">for successfully completing the course</p>
+            <h3 class="cert-course-name" id="cert-course-title">JavaScript Mastery Course</h3>
+            <p class="cert-text-creator">instructed by <span id="cert-course-creator">Instructor Name</span> and powered by YT2Course</p>
+            
+            <div class="cert-footer">
+              <div class="cert-footer-col">
+                <span class="cert-date" id="cert-completion-date">May 22, 2026</span>
+                <span class="cert-footer-label">Date of Completion</span>
+              </div>
+
+              <div class="cert-footer-col">
+                <span class="cert-uuid" id="cert-uuid">YT2C-XXXX-XXXX</span>
+                <span class="cert-footer-label">Certificate ID</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button class="btn-print-certificate no-print" onclick="window.print()">
+        <i data-lucide="printer"></i> Print / Save as PDF
+      </button>
+      <button class="btn-close-certificate no-print" id="btn-close-cert">
+        <i data-lucide="x"></i> Close Preview
+      </button>
+    </div>
+
+    <!-- CERTIFICATE CLAIM MODAL (For UI preview/congratulations before print) -->
+    <div class="modal-overlay" id="modal-certificate-claim">
+      <div class="modal-card cert-claim-card glass-panel">
+        <div class="confetti-holder"></div>
+        <div class="modal-body flex-center">
+          <div class="award-pulse">
+            <i data-lucide="award"></i>
+          </div>
+          <h2 class="congrats-title">Congratulations!</h2>
+          <p class="congrats-subtitle">You have successfully completed 100% of this course!</p>
+          <p class="congrats-desc">Your dedication and effort have paid off. You are now ready to claim your Certificate of Completion.</p>
+          
+          <div class="input-group full-width">
+            <label for="cert-claim-name">Confirm Your Name</label>
+            <input type="text" id="cert-claim-name" placeholder="Enter name for the certificate...">
+          </div>
+          
+          <div class="cert-claim-actions">
+            <button id="btn-generate-cert" class="btn-primary">
+              <i data-lucide="file-text"></i>
+              <span>View & Print Certificate</span>
+            </button>
+            <button class="btn-secondary btn-close-modal">Back to Course</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer Section -->
+    <footer class="app-footer no-print">
+      <div class="footer-content">
+        <div class="footer-info">
+          <p>Author: <a href="https://www.instagram.com/dharun.builds/" target="_blank" class="footer-author-link"><strong>Dharun Thandesh</strong></a></p>
+          <p class="footer-subline">&copy; 2026 YT2Course. All rights reserved.</p>
+        </div>
+        <div class="footer-links">
+          <a href="https://portfolio-dt-three.vercel.app/" target="_blank"><i data-lucide="globe"></i> Portfolio</a>
+          <a href="https://www.instagram.com/dharun.builds/" target="_blank"><i data-lucide="instagram"></i> Instagram</a>
+          <a href="https://www.linkedin.com/in/dharun-thandesh-429ab9375/" target="_blank"><i data-lucide="linkedin"></i> LinkedIn</a>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <!-- YouTube Player API Load -->
+  <script src="https://www.youtube.com/iframe_api"></script>
+  <!-- Application Logic -->
+  <script src="app.js"></script>
+</body>
+</html>

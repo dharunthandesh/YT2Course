@@ -1,0 +1,24 @@
+{
+  "name": "yt2course",
+  "version": "1.0.0",
+  "description": "Convert YouTube Playlists into interactive Udemy-like courses with progress tracking, note-taking, and certificates.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "youtube-transcript": "^1.3.1"
+  },
+  "keywords": [
+    "youtube",
+    "playlist",
+    "course",
+    "lms",
+    "study-tool",
+    "progress-tracker"
+  ],
+  "author": "Antigravity AI",
+  "license": "MIT"
+}
